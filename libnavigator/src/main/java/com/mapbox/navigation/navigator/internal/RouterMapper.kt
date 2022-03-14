@@ -8,8 +8,6 @@ import com.mapbox.navigation.base.route.RouterOrigin.Onboard
 import com.mapbox.navigator.RouterOrigin
 import com.mapbox.navigator.RoutingMode
 
-internal const val HTTP_SUCCESS_CODE = "Ok"
-
 fun RouterOrigin.mapToSdkRouteOrigin(): com.mapbox.navigation.base.route.RouterOrigin {
     return when (this) {
         RouterOrigin.ONLINE -> Offboard
@@ -43,7 +41,7 @@ fun String.mapToRoutingMode(): RoutingMode {
  *
  * @throws IllegalStateException if list is empty
  */
-internal fun List<NavigationRoute>.mapToDirectionsResponse(): DirectionsResponse {
+fun List<NavigationRoute>.mapToDirectionsResponse(): DirectionsResponse {
     val primaryRoute = this.firstOrNull()
         ?: throw IllegalStateException("List of NavigationRoute mustn't be empty")
     return primaryRoute.directionsResponse.toBuilder()
