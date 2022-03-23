@@ -181,7 +181,7 @@ class NavigationRoute internal constructor(
  *
  * This is a lossy mapping since the [DirectionsRoute] cannot carry the same amount of information as [NavigationRoute].
  */
-fun List<NavigationRoute>.toDirectionsRoutes() = map { it.directionsRoute }
+fun List<NavigationRoute>.toDirectionsRoutes(): List<DirectionsRoute> = map { it.directionsRoute }
 
 /**
  * Maps [DirectionsRoute]s to [NavigationRoute]s.
@@ -197,7 +197,8 @@ fun List<NavigationRoute>.toDirectionsRoutes() = map { it.directionsRoute }
  *
  * **Avoid using this mapper and instead try using APIs that accept [NavigationRoute] type where possible.**
  */
-fun List<DirectionsRoute>.toNavigationRoutes() = map { it.toNavigationRoute() }
+fun List<DirectionsRoute>.toNavigationRoutes(): List<NavigationRoute> =
+    map { it.toNavigationRoute() }
 
 /**
  * Maps [DirectionsRoute] to [NavigationRoute].

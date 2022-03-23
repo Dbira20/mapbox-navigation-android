@@ -28,6 +28,7 @@ import com.mapbox.navigator.NavigatorObserver
 import com.mapbox.navigator.PredictiveCacheController
 import com.mapbox.navigator.PredictiveCacheControllerOptions
 import com.mapbox.navigator.PredictiveLocationTrackerOptions
+import com.mapbox.navigator.RerouteControllerInterface
 import com.mapbox.navigator.RoadObjectMatcher
 import com.mapbox.navigator.RoadObjectsStore
 import com.mapbox.navigator.RoadObjectsStoreObserver
@@ -288,6 +289,13 @@ object MapboxNativeNavigatorImpl : MapboxNativeNavigator {
         nativeNavigatorRecreationObserver: NativeNavigatorRecreationObserver
     ) {
         nativeNavigatorRecreationObservers.add(nativeNavigatorRecreationObserver)
+    }
+
+    override fun getRerouteControllerInterface(): RerouteControllerInterface =
+        navigator!!.rerouteController
+
+    override fun setRerouteControllerInterface(rerouteControllerInterface: RerouteControllerInterface) {
+        navigator!!.rerouteController = rerouteControllerInterface
     }
 
     override fun unregisterAllObservers() {
