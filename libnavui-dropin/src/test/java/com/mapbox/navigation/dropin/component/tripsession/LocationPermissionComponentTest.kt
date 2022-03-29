@@ -10,15 +10,17 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import com.mapbox.android.core.permissions.PermissionsManager
 import com.mapbox.navigation.core.MapboxNavigation
+import com.mapbox.navigation.dropin.model.State
+import com.mapbox.navigation.dropin.util.TestStore
 import com.mapbox.navigation.testing.MainCoroutineRule
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
+import io.mockk.spyk
 import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -50,10 +52,7 @@ class LocationPermissionComponentTest {
         }
     }
     private val componentActivityRef = WeakReference(componentActivity)
-    private val tripSessionStarterStateFlow = MutableStateFlow(TripSessionStarterState())
-    private val tripSessionStarterViewModel: TripSessionStarterViewModel = mockk(relaxed = true) {
-        every { state } returns tripSessionStarterStateFlow
-    }
+    private var testStore: TestStore = spyk(TestStore())
 
     @Before
     fun setup() {
@@ -69,14 +68,14 @@ class LocationPermissionComponentTest {
     @Test
     fun `onAttached will notify permissions granted when granted`() {
         val locationPermissionComponent = LocationPermissionComponent(
-            componentActivityRef, tripSessionStarterViewModel
+            componentActivityRef, testStore
         )
         every { PermissionsManager.areLocationPermissionsGranted(any()) } returns true
 
         locationPermissionComponent.onAttached(mockMapboxNavigation())
 
         verify {
-            tripSessionStarterViewModel.invoke(
+            testStore.dispatch(
                 TripSessionStarterAction.OnLocationPermission(true)
             )
         }
@@ -85,14 +84,14 @@ class LocationPermissionComponentTest {
     @Test
     fun `onAttached will not notify permissions granted when not granted`() {
         val locationPermissionComponent = LocationPermissionComponent(
-            componentActivityRef, tripSessionStarterViewModel
+            componentActivityRef, testStore
         )
         every { PermissionsManager.areLocationPermissionsGranted(any()) } returns false
 
         locationPermissionComponent.onAttached(mockMapboxNavigation())
 
         verify(exactly = 0) {
-            tripSessionStarterViewModel.invoke(
+            testStore.dispatch(
                 TripSessionStarterAction.OnLocationPermission(false)
             )
         }
@@ -101,7 +100,7 @@ class LocationPermissionComponentTest {
     @Test
     fun `onAttached will request permissions when not granted`() {
         val locationPermissionComponent = LocationPermissionComponent(
-            componentActivityRef, tripSessionStarterViewModel
+            componentActivityRef, testStore
         )
         every { PermissionsManager.areLocationPermissionsGranted(any()) } returns false
 
@@ -113,7 +112,7 @@ class LocationPermissionComponentTest {
     @Test
     fun `onAttached grant location permissions if request succeeds`() {
         val locationPermissionComponent = LocationPermissionComponent(
-            componentActivityRef, tripSessionStarterViewModel
+            componentActivityRef, testStore
         )
         every { PermissionsManager.areLocationPermissionsGranted(any()) } returns false
 
@@ -125,7 +124,7 @@ class LocationPermissionComponentTest {
         callbackSlot.captured.onActivityResult(permissions)
 
         verify {
-            tripSessionStarterViewModel.invoke(
+            testStore.dispatch(
                 TripSessionStarterAction.OnLocationPermission(true)
             )
         }
@@ -134,7 +133,7 @@ class LocationPermissionComponentTest {
     @Test
     fun `onAttached not grant location permissions if request is denied`() {
         val locationPermissionComponent = LocationPermissionComponent(
-            componentActivityRef, tripSessionStarterViewModel
+            componentActivityRef, testStore
         )
         every { PermissionsManager.areLocationPermissionsGranted(any()) } returns false
 
@@ -146,7 +145,7 @@ class LocationPermissionComponentTest {
         callbackSlot.captured.onActivityResult(permissions)
 
         verify {
-            tripSessionStarterViewModel.invoke(
+            testStore.dispatch(
                 TripSessionStarterAction.OnLocationPermission(false)
             )
         }
@@ -155,7 +154,7 @@ class LocationPermissionComponentTest {
     @Test
     fun `onDetached will unregister from the launcher`() {
         val locationPermissionComponent = LocationPermissionComponent(
-            componentActivityRef, tripSessionStarterViewModel
+            componentActivityRef, testStore
         )
 
         locationPermissionComponent.onAttached(mockMapboxNavigation())
@@ -168,10 +167,12 @@ class LocationPermissionComponentTest {
     fun `should invoke LocationPermissionResult when permissions are accepted from background`() =
         coroutineRule.runBlockingTest {
             val locationPermissionComponent = LocationPermissionComponent(
-                componentActivityRef, tripSessionStarterViewModel
+                componentActivityRef, testStore
             )
-            tripSessionStarterStateFlow.value = TripSessionStarterState(
-                isLocationPermissionGranted = false
+            testStore.setState(
+                State(
+                    tripSession = TripSessionStarterState(isLocationPermissionGranted = false)
+                )
             )
             every { PermissionsManager.areLocationPermissionsGranted(any()) } returns false
 
@@ -180,7 +181,7 @@ class LocationPermissionComponentTest {
             testLifecycle.lifecycleRegistry.currentState = Lifecycle.State.STARTED
 
             verify {
-                tripSessionStarterViewModel.invoke(
+                testStore.dispatch(
                     TripSessionStarterAction.OnLocationPermission(true)
                 )
             }

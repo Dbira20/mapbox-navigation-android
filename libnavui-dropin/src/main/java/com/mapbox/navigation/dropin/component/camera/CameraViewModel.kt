@@ -1,10 +1,13 @@
 package com.mapbox.navigation.dropin.component.camera
 
 import com.mapbox.maps.EdgeInsets
-import com.mapbox.navigation.core.MapboxNavigation
-import com.mapbox.navigation.dropin.lifecycle.UIViewModel
+import com.mapbox.navigation.dropin.lifecycle.UIComponent
+import com.mapbox.navigation.dropin.model.Action
+import com.mapbox.navigation.dropin.model.Reducer
+import com.mapbox.navigation.dropin.model.State
+import com.mapbox.navigation.dropin.model.Store
 
-sealed class CameraAction {
+sealed class CameraAction : Action {
     object ToIdle : CameraAction()
     object ToOverview : CameraAction()
     object ToFollowing : CameraAction()
@@ -12,14 +15,20 @@ sealed class CameraAction {
     data class SaveMapState(val mapState: com.mapbox.maps.CameraState) : CameraAction()
 }
 
-internal class CameraViewModel : UIViewModel<CameraState, CameraAction>(CameraState()) {
+internal class CameraViewModel(store: Store) : UIComponent(), Reducer {
 
-    override fun process(
-        mapboxNavigation: MapboxNavigation,
-        state: CameraState,
-        action: CameraAction
-    ): CameraState {
+    init {
+        store.register(this)
+    }
 
+    override fun process(state: State, action: Action): State {
+        if (action is CameraAction) {
+            return state.copy(camera = processCameraAction(state.camera, action))
+        }
+        return state
+    }
+
+    private fun processCameraAction(state: CameraState, action: CameraAction): CameraState {
         return when (action) {
             is CameraAction.ToIdle -> {
                 state.copy(cameraMode = TargetCameraMode.Idle)

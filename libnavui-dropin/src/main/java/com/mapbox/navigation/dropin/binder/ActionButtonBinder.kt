@@ -16,7 +16,7 @@ import com.mapbox.navigation.dropin.databinding.MapboxActionButtonsLayoutBinding
 
 @OptIn(ExperimentalPreviewMapboxNavigationAPI::class)
 internal class ActionButtonBinder(
-    private val navigationViewContext: NavigationViewContext
+    private val context: NavigationViewContext
 ) : UIBinder {
 
     override fun bind(viewGroup: ViewGroup): MapboxNavigationObserver {
@@ -28,22 +28,11 @@ internal class ActionButtonBinder(
         TransitionManager.go(scene, Slide(Gravity.RIGHT))
 
         val binding = MapboxActionButtonsLayoutBinding.bind(viewGroup)
+        val store = context.viewModel.store
         return navigationListOf(
-            AudioGuidanceButtonComponent(
-                navigationViewContext.viewModel.audioGuidanceViewModel,
-                navigationViewContext.viewModel.navigationStateViewModel,
-                binding.soundButton,
-            ),
-            CameraModeButtonComponent(
-                navigationViewContext.viewModel.cameraViewModel,
-                navigationViewContext.viewModel.navigationStateViewModel,
-                binding.cameraModeButton
-            ),
-            RecenterButtonComponent(
-                navigationViewContext.viewModel.cameraViewModel,
-                navigationViewContext.viewModel.navigationStateViewModel,
-                binding.recenterButton
-            )
+            AudioGuidanceButtonComponent(store, binding.soundButton),
+            CameraModeButtonComponent(store, binding.cameraModeButton),
+            RecenterButtonComponent(store, binding.recenterButton)
         )
     }
 }

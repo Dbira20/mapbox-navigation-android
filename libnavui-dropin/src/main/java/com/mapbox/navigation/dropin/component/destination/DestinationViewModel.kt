@@ -1,30 +1,19 @@
 package com.mapbox.navigation.dropin.component.destination
 
-import com.mapbox.api.geocoding.v5.models.CarmenFeature
-import com.mapbox.geojson.Point
-import com.mapbox.navigation.core.MapboxNavigation
-import com.mapbox.navigation.dropin.lifecycle.UIViewModel
+import com.mapbox.navigation.dropin.lifecycle.UIComponent
+import com.mapbox.navigation.dropin.model.Action
+import com.mapbox.navigation.dropin.model.Reducer
+import com.mapbox.navigation.dropin.model.State
+import com.mapbox.navigation.dropin.model.Store
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-sealed class DestinationAction {
-    data class SetDestination(val destination: Destination?) : DestinationAction()
-
-    data class DidReverseGeocode(
-        val point: Point,
-        val features: List<CarmenFeature>
-    ) : DestinationAction()
-}
-
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class DestinationViewModel(
-    initialState: DestinationState = DestinationState()
-) : UIViewModel<DestinationState, DestinationAction>(initialState) {
+internal class DestinationViewModel(store: Store) : UIComponent(), Reducer {
+    init {
+        store.register(this)
+    }
 
-    override fun process(
-        mapboxNavigation: MapboxNavigation,
-        state: DestinationState,
-        action: DestinationAction
-    ): DestinationState {
+    override fun process(state: State, action: Action): State {
         when (action) {
             is DestinationAction.SetDestination -> {
                 return state.copy(destination = action.destination)

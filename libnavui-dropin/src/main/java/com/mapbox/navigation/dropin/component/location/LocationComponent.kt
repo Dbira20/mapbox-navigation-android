@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 internal class LocationComponent(
     private val mapView: MapView,
-    private val locationViewModel: LocationViewModel
+    private val locationViewModel: LocationViewModel,
 ) : UIComponent() {
 
     override fun onAttached(mapboxNavigation: MapboxNavigation) {

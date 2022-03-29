@@ -7,9 +7,9 @@ import com.mapbox.maps.Style
 import com.mapbox.navigation.base.road.model.Road
 import com.mapbox.navigation.core.MapboxNavigation
 import com.mapbox.navigation.core.trip.session.LocationMatcherResult
-import com.mapbox.navigation.dropin.component.location.LocationViewModel
 import com.mapbox.navigation.dropin.internal.extensions.getStyleId
 import com.mapbox.navigation.dropin.lifecycle.UIComponent
+import com.mapbox.navigation.dropin.model.Store
 import com.mapbox.navigation.ui.maps.roadname.view.MapboxRoadNameView
 import com.mapbox.navigation.ui.shield.api.MapboxRouteShieldApi
 import com.mapbox.navigation.ui.shield.model.RouteShieldError
@@ -18,15 +18,15 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 internal class RoadNameLabelComponent(
+    private val store: Store,
     private val roadNameView: MapboxRoadNameView,
-    private val locationViewModel: LocationViewModel,
     private val mapStyle: Style,
     private val routeShieldApi: MapboxRouteShieldApi = MapboxRouteShieldApi()
 ) : UIComponent() {
     override fun onAttached(mapboxNavigation: MapboxNavigation) {
         super.onAttached(mapboxNavigation)
 
-        locationViewModel.state.observe { matcherResult ->
+        store.select { it.location }.observe { matcherResult ->
             if (matcherResult != null && matcherResult.isRoadNameAvailable()) {
                 roadNameView.isVisible = true
 

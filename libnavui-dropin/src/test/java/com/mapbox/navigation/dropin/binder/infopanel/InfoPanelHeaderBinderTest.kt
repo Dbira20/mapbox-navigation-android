@@ -46,7 +46,7 @@ internal class InfoPanelHeaderBinderTest {
                 }
             )
         }
-        every { mockNavContext.dispatch } returns {}
+
         every { mockNavContext.viewModel } returns mockk(relaxed = true)
     }
 

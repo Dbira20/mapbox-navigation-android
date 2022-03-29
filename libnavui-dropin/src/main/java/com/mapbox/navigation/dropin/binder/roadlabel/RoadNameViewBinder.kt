@@ -31,8 +31,8 @@ internal class RoadNameViewBinder(
         return reloadOnChange(loadedMapStyle) { style ->
             if (style != null) {
                 RoadNameLabelComponent(
+                    context.viewModel.store,
                     binding.roadNameView,
-                    context.viewModel.locationViewModel,
                     style
                 )
             } else {

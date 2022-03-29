@@ -5,10 +5,10 @@ import androidx.core.view.isVisible
 import com.mapbox.navigation.base.ExperimentalPreviewMapboxNavigationAPI
 import com.mapbox.navigation.core.MapboxNavigation
 import com.mapbox.navigation.dropin.component.camera.CameraState
-import com.mapbox.navigation.dropin.component.camera.CameraViewModel
 import com.mapbox.navigation.dropin.component.camera.TargetCameraMode
 import com.mapbox.navigation.dropin.component.navigation.NavigationState
-import com.mapbox.navigation.dropin.component.navigation.NavigationStateViewModel
+import com.mapbox.navigation.dropin.model.State
+import com.mapbox.navigation.dropin.util.TestStore
 import com.mapbox.navigation.dropin.view.MapboxExtendableButton
 import com.mapbox.navigation.testing.MainCoroutineRule
 import io.mockk.Runs
@@ -17,7 +17,6 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -28,7 +27,6 @@ class RecenterButtonComponentTest {
     @get:Rule
     var coroutineRule = MainCoroutineRule()
 
-    private val cameraStateFlow = MutableStateFlow(CameraState())
     private val mockRecenterButton: MapboxExtendableButton = mockk {
         every { setState(any()) } just Runs
         every { visibility = View.VISIBLE } just Runs
@@ -36,25 +34,16 @@ class RecenterButtonComponentTest {
         every { setOnClickListener(any()) } just Runs
     }
     private val mockMapboxNavigation: MapboxNavigation = mockk(relaxed = true)
-    private val navigationStateFlow = MutableStateFlow<NavigationState>(NavigationState.FreeDrive)
 
-    private lateinit var cameraViewModel: CameraViewModel
-    private lateinit var navigationStateViewModel: NavigationStateViewModel
     private lateinit var recenterButtonComponent: RecenterButtonComponent
+    private lateinit var testStore: TestStore
 
     @Before
     fun setUp() {
-        cameraViewModel = mockk {
-            every { state } returns cameraStateFlow
-        }
-
-        navigationStateViewModel = mockk {
-            every { state } returns navigationStateFlow
-        }
+        testStore = TestStore()
 
         recenterButtonComponent = RecenterButtonComponent(
-            cameraViewModel,
-            navigationStateViewModel,
+            testStore,
             mockRecenterButton
         )
     }
@@ -64,7 +53,7 @@ class RecenterButtonComponentTest {
         coroutineRule.runBlockingTest {
             recenterButtonComponent.onAttached(mockMapboxNavigation)
 
-            cameraStateFlow.value = CameraState(cameraMode = TargetCameraMode.Following)
+            testStore.setState(State(camera = CameraState(cameraMode = TargetCameraMode.Following)))
 
             verify { mockRecenterButton.isVisible = false }
         }
@@ -74,7 +63,7 @@ class RecenterButtonComponentTest {
         coroutineRule.runBlockingTest {
             recenterButtonComponent.onAttached(mockMapboxNavigation)
 
-            cameraStateFlow.value = CameraState(cameraMode = TargetCameraMode.Following)
+            testStore.setState(State(camera = CameraState(cameraMode = TargetCameraMode.Following)))
 
             verify { mockRecenterButton.isVisible = true }
         }
@@ -84,7 +73,7 @@ class RecenterButtonComponentTest {
         coroutineRule.runBlockingTest {
             recenterButtonComponent.onAttached(mockMapboxNavigation)
 
-            navigationStateFlow.value = NavigationState.RoutePreview
+            testStore.setState(State(navigation = NavigationState.RoutePreview))
 
             verify { mockRecenterButton.isVisible = false }
         }
