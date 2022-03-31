@@ -11,6 +11,9 @@ import com.mapbox.navigator.RerouteError
 import com.mapbox.navigator.RerouteErrorType
 import com.mapbox.navigator.RerouteInfo
 
+/**
+ * Wrap Customer [NavigationRerouteController] in Native [RerouteControllerInterface]
+ */
 internal class RerouteControllerAdapter(
     private val accessToken: String?,
     private val navigationRerouteController: NavigationRerouteController,

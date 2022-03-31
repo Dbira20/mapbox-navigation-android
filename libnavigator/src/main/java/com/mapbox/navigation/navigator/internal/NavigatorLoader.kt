@@ -120,6 +120,9 @@ object NavigatorLoader {
     private fun customConfig(deviceProfile: DeviceProfile): String {
         val useImuJson = """
             {
+                "features": {
+                    "useInternalReroute": true,
+                },
                 "input": {
             	    "stopDetector": {
             		    "mobile": {

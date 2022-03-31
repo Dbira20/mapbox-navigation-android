@@ -33,6 +33,7 @@
         <activity android:name=".view.FeedbackActivity" />
         <activity android:name=".view.InactiveRouteStylingWithRestrictionsActivity" />
         <activity android:name=".view.StatusActivity" />
+        <activity android:name=".view.RerouteActivity" />
         <activity
             android:name=".view.IconsPreviewActivity"
             android:theme="@style/Theme.IconsPreviewActivity" />

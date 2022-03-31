@@ -57,13 +57,11 @@ import com.mapbox.navigation.core.internal.utils.isInternalImplementation
 import com.mapbox.navigation.core.internal.utils.paramsProvider
 import com.mapbox.navigation.core.navigator.TilesetDescriptorFactory
 import com.mapbox.navigation.core.replay.MapboxReplayer
-import com.mapbox.navigation.core.reroute.DisabledRerouteControllerInterface
 import com.mapbox.navigation.core.reroute.LegacyRerouteControllerAdapter
-import com.mapbox.navigation.core.reroute.MapboxRerouteController
 import com.mapbox.navigation.core.reroute.MapboxRerouteControllerFacade
-import com.mapbox.navigation.core.reroute.NativeRerouteControllerWrapper
 import com.mapbox.navigation.core.reroute.NavigationRerouteController
 import com.mapbox.navigation.core.reroute.RerouteController
+import com.mapbox.navigation.core.reroute.RerouteControllersManager
 import com.mapbox.navigation.core.reroute.RerouteOptionsAdapter
 import com.mapbox.navigation.core.reroute.RerouteState
 import com.mapbox.navigation.core.routealternatives.AlternativeRouteMetadata
@@ -74,7 +72,6 @@ import com.mapbox.navigation.core.routealternatives.RouteAlternativesControllerP
 import com.mapbox.navigation.core.routealternatives.RouteAlternativesError
 import com.mapbox.navigation.core.routealternatives.RouteAlternativesObserver
 import com.mapbox.navigation.core.routealternatives.RouteAlternativesRequestCallback
-import com.mapbox.navigation.core.routeoptions.RouteOptionsUpdater
 import com.mapbox.navigation.core.routerefresh.RouteRefreshController
 import com.mapbox.navigation.core.routerefresh.RouteRefreshControllerProvider
 import com.mapbox.navigation.core.telemetry.MapboxNavigationTelemetry
@@ -121,7 +118,6 @@ import com.mapbox.navigator.FallbackVersionsObserver
 import com.mapbox.navigator.IncidentsOptions
 import com.mapbox.navigator.NavigatorConfig
 import com.mapbox.navigator.PollingConfig
-import com.mapbox.navigator.RerouteControllerInterface
 import com.mapbox.navigator.RouterInterface
 import com.mapbox.navigator.TileEndpointConfiguration
 import com.mapbox.navigator.TilesConfig
@@ -318,13 +314,9 @@ class MapboxNavigation @VisibleForTesting internal constructor(
     private var notificationChannelField: Field? = null
 
     /**
-     * Reroute controller, by default uses [defaultRerouteController].
+     * Reroute Controllers Manager handles native and platform reroute controllers
      */
-    private var rerouteController: NavigationRerouteController?
-    private var defaultRerouteController: NavigationRerouteController
-    private val disabledRerouteControllerInterface: RerouteControllerInterface by lazy {
-        DisabledRerouteControllerInterface()
-    }
+    private val rerouteControllersManager: RerouteControllersManager
 
     /**
      * [NavigationVersionSwitchObserver] is notified when navigation switches tiles version.
@@ -504,8 +496,6 @@ class MapboxNavigation @VisibleForTesting internal constructor(
             }
         }
 
-        val routeOptionsProvider = RouteOptionsUpdater()
-
         routeAlternativesController = RouteAlternativesControllerProvider.create(
             navigationOptions.routeAlternativesOptions,
             navigator,
@@ -519,25 +509,11 @@ class MapboxNavigation @VisibleForTesting internal constructor(
             threadController,
         )
 
-        val nativeRerouteController = navigator.getRerouteControllerInterface()
-        val nativeRerouteControllerWrapper = NativeRerouteControllerWrapper(
-            accessToken,
-            nativeRerouteController
-        )
-        navigator.setRerouteControllerInterface(nativeRerouteControllerWrapper)
-        defaultRerouteController = MapboxRerouteControllerFacade(
-            nativeRerouteControllerWrapper,
-            navigator,
-        )
+        val rerouteController = navigator.getRerouteControllerInterface()
 
-//        defaultRerouteController = MapboxRerouteController(
-//            directionsSession,
-//            tripSession,
-//            routeOptionsProvider,
-//            navigationOptions.rerouteOptions,
-//            threadController,
-//        )
-        rerouteController = defaultRerouteController
+        rerouteControllersManager = RerouteControllersManager.provideRerouteManager(
+            accessToken, directionsSession, navigator
+        )
 
         internalRoutesObserver = createInternalRoutesObserver()
         internalFallbackVersionsObserver = createInternalFallbackVersionsObserver()
@@ -787,7 +763,7 @@ class MapboxNavigation @VisibleForTesting internal constructor(
         if (routes.isNotEmpty()) {
             billingController.onExternalRouteSet(routes.first())
         }
-        rerouteController?.interrupt()
+        rerouteControllersManager.interruptReroute()
 
         // Telemetry uses this field to determine what type of event should be triggered.
         @RoutesExtra.RoutesUpdateReason val reason = when {
@@ -1129,10 +1105,7 @@ class MapboxNavigation @VisibleForTesting internal constructor(
      */
     fun setRerouteController(rerouteController: RerouteController) {
         LegacyRerouteControllerAdapter(rerouteController).also { legacyRerouteAdapter ->
-            this.rerouteController = legacyRerouteAdapter
-            navigator.setRerouteControllerInterface(
-                RerouteControllerAdapter(accessToken, legacyRerouteAdapter)
-            )
+            rerouteControllersManager.setOuterRerouteController(legacyRerouteAdapter)
         }
     }
 
@@ -1140,14 +1113,21 @@ class MapboxNavigation @VisibleForTesting internal constructor(
      * Set [RerouteOptionsAdapter]. It allows to modify [RouteOptions] before a reroute request
      * is sent if the default reroute controller is used. Pass `null` to clear the adapter.
      */
-    @JvmOverloads
     fun setRerouteController(
-        rerouteController: NavigationRerouteController? = defaultRerouteController
+        rerouteController: NavigationRerouteController?
     ) {
-        if (rerouteController == null){
-            navigator.setRerouteControllerInterface(disabledRerouteControllerInterface)
+        if (rerouteController == null) {
+            rerouteControllersManager.disableReroute()
+        } else {
+            rerouteControllersManager.setOuterRerouteController(rerouteController)
         }
-        this.rerouteController = rerouteController
+    }
+
+    /**
+     * Reset Reroute Controller to default implementation
+     */
+    fun setRerouteController() {
+        rerouteControllersManager.resetToDefaultRerouteController()
     }
 
     /**
@@ -1157,8 +1137,7 @@ class MapboxNavigation @VisibleForTesting internal constructor(
     fun setRerouteOptionsAdapter(
         rerouteOptionsAdapter: RerouteOptionsAdapter?
     ) {
-        (rerouteController as? MapboxRerouteController)
-            ?.setRerouteOptionsAdapter(rerouteOptionsAdapter)
+        rerouteControllersManager.setRerouteOptionsAdapter(rerouteOptionsAdapter)
     }
 
     /**
@@ -1166,7 +1145,8 @@ class MapboxNavigation @VisibleForTesting internal constructor(
      *
      * @see setRerouteController
      */
-    fun getRerouteController(): NavigationRerouteController? = rerouteController
+    fun getRerouteController(): NavigationRerouteController? =
+        rerouteControllersManager.rerouteControllerInterface
 
     /**
      * Registers [ArrivalObserver]. Monitor arrival at stops and destinations. For more control
@@ -1557,6 +1537,7 @@ class MapboxNavigation @VisibleForTesting internal constructor(
                 },
             )
             historyRecorder.historyRecorderHandle = navigator.getHistoryRecorderHandle()
+            rerouteControllersManager.onNavigatorRecreated()
 
             directionsSession.routes.firstOrNull()?.let { route ->
                 navigator.setPrimaryRoute(
@@ -1569,15 +1550,6 @@ class MapboxNavigation @VisibleForTesting internal constructor(
             directionsSession.routes.drop(1).let {
                 navigator.setAlternativeRoutes(it)
             }
-        }
-    }
-
-    private fun reroute() {
-        rerouteController?.reroute { routes, _ ->
-            internalSetNavigationRoutes(
-                routes,
-                reason = RoutesExtra.ROUTES_UPDATE_REASON_REROUTE
-            )
         }
     }
 

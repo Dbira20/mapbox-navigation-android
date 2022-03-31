@@ -3,17 +3,18 @@ package com.mapbox.navigation.core.reroute
 import com.mapbox.api.directions.v5.models.DirectionsResponse
 import com.mapbox.navigation.base.route.toDirectionsRoutes
 import com.mapbox.navigation.base.route.toNavigationRoutes
-import com.mapbox.navigation.navigator.internal.MapboxNativeNavigator
+import com.mapbox.navigation.core.directions.session.DirectionsSession
+import com.mapbox.navigation.core.directions.session.RoutesExtra
 import com.mapbox.navigation.navigator.internal.mapToSdkRouteOrigin
-import com.mapbox.navigation.utils.internal.logE
 import com.mapbox.navigator.RerouteError
 import com.mapbox.navigator.RerouteObserver
 import com.mapbox.navigator.RouterOrigin
 import java.util.concurrent.CopyOnWriteArraySet
 
 internal class MapboxRerouteControllerFacade(
-    private val nativeRerouteController: NativeExtendedRerouteControllerInterface,
-) : NavigationRerouteController, RerouteOptionsAdapterManager {
+    private val directionsSession: DirectionsSession,
+    internal val nativeRerouteController: NativeExtendedRerouteControllerInterface,
+) : NavigationRerouteController {
 
     override var state: RerouteState = RerouteState.Idle
         set(value) {
@@ -24,7 +25,7 @@ internal class MapboxRerouteControllerFacade(
 
     private val observers = CopyOnWriteArraySet<RerouteController.RerouteStateObserver>()
 
-    companion object {
+    private companion object {
         private const val TAG = "MapboxRerouteControllerFacade"
     }
 
@@ -40,6 +41,10 @@ internal class MapboxRerouteControllerFacade(
                 origin: RouterOrigin
             ) {
                 state = RerouteState.RouteFetched(origin.mapToSdkRouteOrigin())
+                directionsSession.setRoutes(
+                    DirectionsResponse.fromJson(routeResponse).routes().toNavigationRoutes(),
+                    routesUpdateReason = RoutesExtra.ROUTES_UPDATE_REASON_REROUTE
+                )
                 state = RerouteState.Idle
             }
 
@@ -63,20 +68,20 @@ internal class MapboxRerouteControllerFacade(
     }
 
     override fun reroute(callback: NavigationRerouteController.RoutesCallback) {
-        nativeRerouteController.forceReroute()
-
-        nativeRerouteController.reroute("") { exptected ->
-            exptected.fold({ error ->
-                logE(TAG, "Reroutes error: $error")
-            }, { value ->
-                val directionsResponse = DirectionsResponse.fromJson(value.routeResponse)
-                if (directionsResponse.routes().isNotEmpty()) {
-                    callback.onNewRoutes(directionsResponse.routes().toNavigationRoutes())
-                } else {
-                    logE(TAG, "Routes list mustn't be null")
-                }
+        if (state is RerouteState.FetchingRoute) {
+            interrupt()
+        }
+        nativeRerouteController.setRerouteCallbackListener { expected ->
+            nativeRerouteController.setRerouteCallbackListener(null)
+            expected.fold({
+                // do nothing
+            }, { rerouteInfo ->
+                val directionsResponse = DirectionsResponse.fromJson(rerouteInfo.routeResponse)
+                val navRoutes = directionsResponse.routes().toNavigationRoutes()
+                callback.onNewRoutes(navRoutes, rerouteInfo.origin.mapToSdkRouteOrigin())
             })
         }
+        nativeRerouteController.forceReroute()
     }
 
     override fun reroute(routesCallback: RerouteController.RoutesCallback) {
@@ -103,7 +108,7 @@ internal class MapboxRerouteControllerFacade(
     ): Boolean =
         observers.remove(rerouteStateObserver)
 
-    override fun setRerouteOptionsDelegate(rerouteOptionsAdapter: RerouteOptionsAdapter) {
+    fun setRerouteOptionsAdapter(rerouteOptionsAdapter: RerouteOptionsAdapter?) {
         nativeRerouteController.setRerouteOptionsAdapter(rerouteOptionsAdapter)
     }
 }

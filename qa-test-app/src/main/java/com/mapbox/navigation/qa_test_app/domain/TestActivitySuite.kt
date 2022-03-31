@@ -14,6 +14,7 @@ import com.mapbox.navigation.qa_test_app.view.MapboxNavigationViewActivity
 import com.mapbox.navigation.qa_test_app.view.MapboxNavigationViewCustomizedActivity
 import com.mapbox.navigation.qa_test_app.view.MapboxNavigationViewFragmentActivity
 import com.mapbox.navigation.qa_test_app.view.MapboxRouteLineActivity
+import com.mapbox.navigation.qa_test_app.view.RerouteActivity
 import com.mapbox.navigation.qa_test_app.view.RouteRestrictionsActivity
 import com.mapbox.navigation.qa_test_app.view.RouteTrafficUpdateActivity
 import com.mapbox.navigation.qa_test_app.view.StatusActivity
@@ -27,10 +28,16 @@ object TestActivitySuite {
     @OptIn(ExperimentalPreviewMapboxNavigationAPI::class)
     val testActivities = listOf(
         TestActivityDescription(
+            "Reroute Activity",
+            R.string.mapbox_navigation_app_lifecycle_description
+        ) { activity ->
+            activity.startActivity<AppLifecycleActivity>()
+        },
+        TestActivityDescription(
             "MapboxNavigation Lifecycle",
             R.string.mapbox_navigation_app_lifecycle_description,
         ) { activity ->
-            activity.startActivity<AppLifecycleActivity>()
+            activity.startActivity<RerouteActivity>()
         },
         TestActivityDescription(
             "Alternative Route Selection",

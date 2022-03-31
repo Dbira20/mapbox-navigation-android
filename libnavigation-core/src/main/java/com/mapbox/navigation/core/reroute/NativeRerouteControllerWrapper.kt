@@ -2,7 +2,6 @@ package com.mapbox.navigation.core.reroute
 
 import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.bindgen.Expected
-import com.mapbox.navigation.base.route.NavigationRoute
 import com.mapbox.navigation.navigator.internal.MapboxNativeNavigator
 import com.mapbox.navigator.RerouteCallback
 import com.mapbox.navigator.RerouteControllerInterface
@@ -15,11 +14,10 @@ internal class NativeRerouteControllerWrapper(
     private val accessToken: String?,
     private val nativeRerouteController: RerouteControllerInterface,
     private val nativeNavigator: MapboxNativeNavigator,
-//    private val urlAdapter: (String) -> String,
-//    private val rerouteObserver: (result: Expected<RerouteError, RerouteInfo>) -> Unit,
 ) : NativeExtendedRerouteControllerInterface {
 
     private var rerouteOptionsAdapter: RerouteOptionsAdapter? = null
+    private var rerouteCallback: ((result: Expected<RerouteError, RerouteInfo>) -> Unit)? = null
 
     override fun reroute(url: String, callback: RerouteCallback) {
         val newUrl = when (val adapter = rerouteOptionsAdapter) {
@@ -29,8 +27,8 @@ internal class NativeRerouteControllerWrapper(
                 .toString()
         }
         nativeRerouteController.reroute(newUrl) { result ->
+            rerouteCallback?.invoke(result)
             callback.run(result)
-//            rerouteObserver(result)
         }
     }
 
@@ -46,8 +44,13 @@ internal class NativeRerouteControllerWrapper(
         nativeNavigator.getRerouteDetector().forceReroute()
     }
 
-    internal fun setRerouteOptionsAdapter(rerouteOptionsAdapter: RerouteOptionsAdapter){
+    override fun setRerouteOptionsAdapter(rerouteOptionsAdapter: RerouteOptionsAdapter?) {
         this.rerouteOptionsAdapter = rerouteOptionsAdapter
     }
 
+    override fun setRerouteCallbackListener(
+        rerouteCallback: ((result: Expected<RerouteError, RerouteInfo>) -> Unit)?
+    ) {
+        this.rerouteCallback = rerouteCallback
+    }
 }
