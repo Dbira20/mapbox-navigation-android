@@ -17,7 +17,7 @@ ext {
   println("Navigation Native version: " + mapboxNavigatorVersion)
 
   version = [
-      mapboxMapSdk              : '10.4.0',
+      mapboxMapSdk              : '10.4.0-beta.1-line-trim-offset-SNAPSHOT', //fixme don't keep this snapshot
       mapboxSdkServices         : '6.4.0-beta.4',
       mapboxEvents              : '8.1.1',
       mapboxCore                : '5.0.1',

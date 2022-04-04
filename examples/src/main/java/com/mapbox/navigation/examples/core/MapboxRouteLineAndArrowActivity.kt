@@ -1,6 +1,7 @@
 package com.mapbox.navigation.examples.core
 
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
@@ -109,7 +110,10 @@ class MapboxRouteLineAndArrowActivity : AppCompatActivity(), OnMapLongClickListe
 
     // RouteLine: Route line related colors can be customized via the RouteLineColorResources.
     private val routeLineColorResources by lazy {
-        RouteLineColorResources.Builder().build()
+        RouteLineColorResources.Builder()
+            .routeLineTraveledColor(Color.LTGRAY)
+            .routeLineTraveledCasingColor(Color.GRAY)
+            .build()
     }
 
     // RouteLine: Various route line related options can be customized here including applying
@@ -199,7 +203,7 @@ class MapboxRouteLineAndArrowActivity : AppCompatActivity(), OnMapLongClickListe
             null,
             ContextCompat.getDrawable(
                 this@MapboxRouteLineAndArrowActivity,
-                R.drawable.mapbox_navigation_puck_icon
+                R.drawable.custom_user_puck_icon
             ),
             null,
             null

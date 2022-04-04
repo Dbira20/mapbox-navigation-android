@@ -52,6 +52,7 @@ import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import org.junit.After
@@ -61,6 +62,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.util.UUID
 
+@ExperimentalCoroutinesApi
 class MapboxRouteLineViewTest {
 
     @get:Rule

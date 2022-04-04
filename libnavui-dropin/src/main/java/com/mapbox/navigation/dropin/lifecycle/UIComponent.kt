@@ -33,7 +33,7 @@ open class UIComponent : MapboxNavigationObserver {
     }
 
     protected inline fun <T> Flow<T>.observe(crossinline action: suspend (value: T) -> Unit) {
-        coroutineScope.launch { collect(action) }
+        //coroutineScope.launch { collect(action) } //SBNOTE: fixme restore this
     }
 }
 

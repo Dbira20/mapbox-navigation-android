@@ -10,6 +10,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.mapbox.android.core.permissions.PermissionsListener
+import com.mapbox.navigation.examples.core.InactiveRouteStylingWithRestrictionsActivity
 import com.mapbox.navigation.examples.core.IndependentRouteGenerationActivity
 import com.mapbox.navigation.examples.core.MapboxBuildingHighlightActivity
 import com.mapbox.navigation.examples.core.MapboxCustomStyleActivity
@@ -24,6 +25,7 @@ import com.mapbox.navigation.examples.core.MapboxVoiceActivity
 import com.mapbox.navigation.examples.core.MultiLegRouteExampleActivity
 import com.mapbox.navigation.examples.core.R
 import com.mapbox.navigation.examples.core.ReplayHistoryActivity
+import com.mapbox.navigation.examples.core.RouteRestrictionsActivity
 import com.mapbox.navigation.examples.core.camera.MapboxCameraAnimationsActivity
 import com.mapbox.navigation.examples.core.databinding.LayoutActivityMainBinding
 import com.mapbox.navigation.examples.util.LocationPermissionsHelper
@@ -138,6 +140,18 @@ class MainActivity : AppCompatActivity(), PermissionsListener {
                 getString(R.string.title_draw_utility),
                 getString(R.string.description_draw_utility),
                 RouteDrawingActivity::class.java
+            ),
+
+            SampleItem(
+                "Route restrictions test",
+                "Route restrictions test",
+                RouteRestrictionsActivity::class.java
+            ),
+
+            SampleItem(
+                "Route restrictions with legs test",
+                "Route restrictions with legs test",
+                InactiveRouteStylingWithRestrictionsActivity::class.java
             ),
         )
     }

@@ -58,3 +58,8 @@ fun interface RouteLineExpressionProvider {
      */
     fun generateExpression(): Expression
 }
+
+/**
+ * Represents a function that returns an [Expression]
+ */
+fun interface RouteLineTrimExpressionProvider : RouteLineExpressionProvider
