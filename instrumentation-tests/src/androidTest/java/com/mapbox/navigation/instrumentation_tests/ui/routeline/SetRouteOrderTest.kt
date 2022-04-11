@@ -9,6 +9,7 @@ import androidx.test.espresso.idling.CountingIdlingResource
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.bindgen.Expected
 import com.mapbox.navigation.base.internal.route.RouteCompatibilityCache
+import com.mapbox.navigation.base.internal.utils.isSameRoute
 import com.mapbox.navigation.base.route.toNavigationRoute
 import com.mapbox.navigation.instrumentation_tests.R
 import com.mapbox.navigation.instrumentation_tests.activity.BasicNavigationViewActivity
@@ -25,6 +26,7 @@ import com.mapbox.navigation.ui.maps.route.line.model.RouteSetValue
 import com.mapbox.navigation.utils.internal.logE
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.Timer
@@ -122,7 +124,7 @@ class SetRouteOrderTest : BaseTest<BasicNavigationViewActivity>(
                     .trafficExpressionProvider!!
                     .generateExpression()
                     .contents as ArrayList<*>
-                assertEquals(shortRoute, primaryRoute)
+                assertTrue(shortRoute.isSameRoute(primaryRoute))
                 assertEquals(
                     7,
                     contents.size
@@ -138,7 +140,7 @@ class SetRouteOrderTest : BaseTest<BasicNavigationViewActivity>(
             timerTask {
                 routeLineApi.setRoutes(shortRoutes, consumer)
             },
-            5
+            3
         )
 
         Espresso.onIdle()
