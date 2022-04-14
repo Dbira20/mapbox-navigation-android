@@ -583,6 +583,7 @@ package com.mapbox.navigation.base.route {
   public static final class NavigationRoute.Companion {
     method public java.util.List<com.mapbox.navigation.base.route.NavigationRoute> create(com.mapbox.api.directions.v5.models.DirectionsResponse directionsResponse, com.mapbox.api.directions.v5.models.RouteOptions routeOptions);
     method public java.util.List<com.mapbox.navigation.base.route.NavigationRoute> create(String directionsResponseJson, String routeRequestUrl);
+    method public suspend Object? createEx(String directionsResponseJson, String routeRequestUrl, kotlin.coroutines.Continuation<? super java.util.List<com.mapbox.navigation.base.route.NavigationRoute>> p);
   }
 
   public final class NavigationRouteEx {

@@ -10,12 +10,17 @@ import com.mapbox.api.directions.v5.models.RouteLeg
 import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.api.directions.v5.models.StepIntersection
 import com.mapbox.api.directions.v5.models.StepManeuver
+import com.mapbox.bindgen.Expected
 import com.mapbox.geojson.LineString
 import com.mapbox.geojson.Point
 import com.mapbox.navigation.base.internal.NativeRouteParserWrapper
 import com.mapbox.navigation.base.internal.SDKRouteParser
 import com.mapbox.navigation.base.internal.route.RouteCompatibilityCache
+import com.mapbox.navigation.utils.internal.logE
 import com.mapbox.navigator.RouteInterface
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import java.net.URL
 
 /**
@@ -73,6 +78,25 @@ class NavigationRoute internal constructor(
             )
         }
 
+        /**
+         * Creates new instances of [NavigationRoute] based on the routes found in the [directionsResponseJson].
+         *
+         * Should not be called from UI thread. Contains serialisation and deserialisation under the hood.
+         *
+         * @param directionsResponseJson response to be parsed into [NavigationRoute]s
+         * @param routeRequestUrl URL used to generate the [directionsResponse]
+         */
+        suspend fun createEx(
+            directionsResponseJson: String,
+            routeRequestUrl: String,
+        ): List<NavigationRoute> {
+            return create(
+                directionsResponseJson = directionsResponseJson,
+                RouteOptions.fromUrl(URL(routeRequestUrl)),
+                routeOptionsUrlString = routeRequestUrl
+            )
+        }
+
         internal fun create(
             directionsResponse: DirectionsResponse,
             routeOptions: RouteOptions,
@@ -96,21 +120,54 @@ class NavigationRoute internal constructor(
         ): List<NavigationRoute> {
             return routeParser.parseDirectionsResponse(
                 directionsResponseJson, routeOptionsUrlString
-            ).fold(
-                { error ->
-                    throw RuntimeException("Failed to parse a route. Reason: $error")
-                },
-                { value ->
-                    value.mapIndexed { index, routeInterface ->
-                        NavigationRoute(
-                            directionsResponse,
-                            index,
-                            routeOptions,
-                            routeInterface
-                        )
-                    }
+            ).run {
+                create(this, directionsResponse, routeOptions)
+            }
+        }
+
+        private suspend fun create(
+            directionsResponseJson: String,
+            routeOptions: RouteOptions,
+            routeOptionsUrlString: String,
+            routeParser: SDKRouteParser = NativeRouteParserWrapper
+        ): List<NavigationRoute> {
+            return coroutineScope {
+                val deferredDirectionsResponse = async(Dispatchers.Default) {
+                    DirectionsResponse.fromJson(directionsResponseJson)
                 }
-            ).cache()
+
+                val deferredParsingResponse = async(Dispatchers.Default) {
+                    routeParser.parseDirectionsResponse(
+                        directionsResponseJson,
+                        routeOptionsUrlString
+                    )
+                }
+                create(
+                    deferredParsingResponse.await(),
+                    deferredDirectionsResponse.await(),
+                    routeOptions
+                )
+            }
+        }
+
+        private fun create(
+            expected: Expected<String, List<RouteInterface>>,
+            directionsResponse: DirectionsResponse,
+            routeOptions: RouteOptions,
+        ): List<NavigationRoute> {
+            return expected.fold({ error ->
+                logE("NavigationRoute", "Failed to parse a route. Reason: $error")
+                listOf<RouteInterface>()
+            }, { value ->
+                value
+            }).mapIndexed { index, routeInterface ->
+                NavigationRoute(
+                    directionsResponse,
+                    index,
+                    routeOptions,
+                    routeInterface
+                )
+            }.cache()
         }
     }
 
