@@ -6,6 +6,7 @@ Mapbox welcomes participation and contributions from everyone.
 
 #### Features
 - Added `MapboxNavigation#setTripNotificationInterceptor` to allow for notification customizations. This makes the notification compatible with the `CarAppExtender`. [#5669](https://github.com/mapbox/mapbox-navigation-android/pull/5669)
+- Added support for excluding maneuvers from the 'pitch to 0' camera updates. [#5717](https://github.com/mapbox/mapbox-navigation-android/pull/5717)
 
 #### Bug fixes and improvements
 - Added `NavigationOptions#EHorizonOptions#AlertServiceOptions` which allow to control which road objects are picked up from the eHorizon graph. :warning: Since Restricted Areas can be resource intensive to pick up, they are now disabled by default. [#5693](https://github.com/mapbox/mapbox-navigation-android/pull/5693)

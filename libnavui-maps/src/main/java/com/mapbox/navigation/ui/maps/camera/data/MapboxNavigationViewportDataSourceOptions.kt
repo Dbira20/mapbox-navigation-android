@@ -185,6 +185,11 @@ class FollowingFrameOptions internal constructor() {
          * Defaults to `180.0` meters.
          */
         var triggerDistanceFromManeuver = 180.0
+
+        /**
+         * List of maneuvers for which camera frames pitch should not be set to `0`.
+         */
+        var excludedManeuvers: List<String> = emptyList()
     }
 
     /**
