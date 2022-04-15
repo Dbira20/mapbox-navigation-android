@@ -210,19 +210,6 @@ object MapboxNativeNavigatorImpl : MapboxNativeNavigator {
     }
 
     /**
-     * Gets the current banner. If there is no
-     * banner, the method returns *null*.
-     *
-     * @return [BannerInstruction] for step index you passed
-     */
-    override suspend fun getCurrentBannerInstruction(): BannerInstruction? =
-        suspendCancellableCoroutine { continuation ->
-            navigator!!.getBannerInstruction {
-                continuation.resume(it)
-            }
-        }
-
-    /**
      * Follows a new leg of the already loaded directions.
      * Returns an initialized navigation status if no errors occurred
      * otherwise, it returns an invalid navigation status state.

@@ -100,14 +100,6 @@ interface MapboxNativeNavigator {
     suspend fun updateAnnotations(route: NavigationRoute)
 
     /**
-     * Gets the current banner. If there is no
-     * banner, the method returns *null*.
-     *
-     * @return [BannerInstruction] for step index you passed
-     */
-    suspend fun getCurrentBannerInstruction(): BannerInstruction?
-
-    /**
      * Follows a new leg of the already loaded directions.
      * Returns an initialized navigation status if no errors occurred
      * otherwise, it returns an invalid navigation status state.

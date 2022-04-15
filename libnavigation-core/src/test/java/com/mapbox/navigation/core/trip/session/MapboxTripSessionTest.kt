@@ -514,40 +514,6 @@ class MapboxTripSessionTest {
         tripSession.stop()
     }
 
-    /**
-     * Test for a workaround for https://github.com/mapbox/mapbox-navigation-android/issues/4727.
-     */
-    @Test
-    fun `banner instruction fallback for missing native events`() = coroutineRule.runBlockingTest {
-        val step = mockk<LegStep>(relaxed = true)
-        val nativeBanner = mockk<BannerInstruction>(relaxed = true)
-        val banner = mockk<BannerInstructions>(relaxed = true)
-        every { navigationStatus.legIndex } returns 0
-        every { navigationStatus.stepIndex } returns 1
-        every { routes.first().directionsRoute.legs() } returns listOf(
-            mockk {
-                every { steps() } returns listOf(
-                    mockk(relaxed = true),
-                    step
-                )
-            }
-        )
-        every { nativeBanner.mapToDirectionsApi() } returns banner
-        coEvery { MapboxNativeNavigatorImpl.getCurrentBannerInstruction() } returns nativeBanner
-        val bannerInstructionsObserver: BannerInstructionsObserver = mockk(relaxUnitFun = true)
-
-        tripSession = buildTripSession()
-        tripSession.registerBannerInstructionsObserver(bannerInstructionsObserver)
-        tripSession.setRoutes(routes, legIndex, updateReason)
-        tripSession.start(true)
-        every { navigationStatus.routeState } returns RouteState.TRACKING
-        every { navigationStatus.bannerInstruction } returns null
-        navigatorObserverImplSlot.captured.onStatus(navigationStatusOrigin, navigationStatus)
-
-        verify { getRouteProgressFrom(routes[0], navigationStatus, any(), banner, 0, any()) }
-        tripSession.stop()
-    }
-
     @Test
     fun bannerInstructionObserverNotInvokedWhenRouteStateInvalid() = coroutineRule.runBlockingTest {
         val bannerInstructionsObserver: BannerInstructionsObserver = mockk(relaxUnitFun = true)
@@ -1484,37 +1450,6 @@ class MapboxTripSessionTest {
                 }
             }
         }
-
-    @Test
-    fun `updateRouteProgressJob is cancelled onStatus update`() = runBlockingTest {
-        coEvery { MapboxNativeNavigatorImpl.getCurrentBannerInstruction() } coAnswers {
-            delay(100) // doesn't affect test duration
-            null
-        }
-
-        val leg: RouteLeg = mockk(relaxed = true)
-        val legs = listOf(leg)
-        val steps: List<LegStep> = mockk(relaxed = true)
-        every { navigationStatus.legIndex } returns 0
-        every { navigationStatus.bannerInstruction } returns null
-        every { routes.first().directionsRoute.legs() } returns legs
-        every { leg.steps() } returns steps
-
-        val routeProgressObserver: RouteProgressObserver = mockk(relaxUnitFun = true)
-        tripSession = buildTripSession()
-        tripSession.registerRouteProgressObserver(routeProgressObserver)
-        tripSession.start(true)
-
-        // each status update cancels updateRouteProgressJob,
-        // only the last one will update routeProgress
-        repeat(5) {
-            navigatorObserverImplSlot.captured.onStatus(navigationStatusOrigin, navigationStatus)
-        }
-
-        coroutineRule.testDispatcher.advanceTimeBy(200)
-
-        verify(exactly = 1) { routeProgressObserver.onRouteProgressChanged(any()) }
-    }
 
     @After
     fun cleanUp() {

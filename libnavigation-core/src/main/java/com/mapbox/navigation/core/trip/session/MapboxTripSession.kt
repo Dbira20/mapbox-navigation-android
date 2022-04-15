@@ -316,42 +316,27 @@ internal class MapboxTripSession(
                 return
             }
 
-            updateRouteProgressJob?.cancel()
-            updateRouteProgressJob = mainJobController.scope.launch(Dispatchers.Main.immediate) {
-                var triggerObserver = false
-                if (tripStatus.navigationStatus.routeState != RouteState.INVALID) {
-                    val nativeBannerInstruction: BannerInstruction? =
-                        tripStatus.navigationStatus.bannerInstruction.let {
-                            if (it == null &&
-                                bannerInstructionEvent.latestBannerInstructions == null
-                            ) {
-                                // workaround for a remaining issues in
-                                // github.com/mapbox/mapbox-navigation-native/issues/3466
-                                MapboxNativeNavigatorImpl.getCurrentBannerInstruction()
-                            } else {
-                                it
-                            }
-                        }
-                    val bannerInstructions: BannerInstructions? =
-                        nativeBannerInstruction?.mapToDirectionsApi()
-                    triggerObserver = bannerInstructionEvent.isOccurring(
-                        bannerInstructions,
-                        nativeBannerInstruction?.index
-                    )
-                }
-                val remainingWaypoints = calculateRemainingWaypoints(tripStatus)
-                val routeProgress = getRouteProgressFrom(
-                    tripStatus.route,
-                    tripStatus.navigationStatus,
-                    remainingWaypoints,
-                    bannerInstructionEvent.latestBannerInstructions,
-                    bannerInstructionEvent.latestInstructionIndex,
-                    lastVoiceInstruction
+            var triggerObserver = false
+            if (tripStatus.navigationStatus.routeState != RouteState.INVALID) {
+                val nativeBannerInstruction = tripStatus.navigationStatus.bannerInstruction
+                val bannerInstructions = nativeBannerInstruction?.mapToDirectionsApi()
+                triggerObserver = bannerInstructionEvent.isOccurring(
+                    bannerInstructions,
+                    nativeBannerInstruction?.index
                 )
-                updateRouteProgress(routeProgress, triggerObserver)
-                triggerVoiceInstructionEvent(routeProgress, status)
-                isOffRoute = tripStatus.navigationStatus.routeState == RouteState.OFF_ROUTE
             }
+            val remainingWaypoints = calculateRemainingWaypoints(tripStatus)
+            val routeProgress = getRouteProgressFrom(
+                tripStatus.route,
+                tripStatus.navigationStatus,
+                remainingWaypoints,
+                bannerInstructionEvent.latestBannerInstructions,
+                bannerInstructionEvent.latestInstructionIndex,
+                lastVoiceInstruction
+            )
+            updateRouteProgress(routeProgress, triggerObserver)
+            triggerVoiceInstructionEvent(routeProgress, status)
+            isOffRoute = tripStatus.navigationStatus.routeState == RouteState.OFF_ROUTE
         }
 
         private fun calculateRemainingWaypoints(tripStatus: TripStatus): Int {
