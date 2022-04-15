@@ -32,7 +32,6 @@ import com.mapbox.navigation.utils.internal.ThreadController
 import com.mapbox.navigation.utils.internal.ifNonNull
 import com.mapbox.navigation.utils.internal.logD
 import com.mapbox.navigation.utils.internal.logW
-import com.mapbox.navigator.BannerInstruction
 import com.mapbox.navigator.FallbackVersionsObserver
 import com.mapbox.navigator.NavigationStatus
 import com.mapbox.navigator.NavigationStatusOrigin

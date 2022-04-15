@@ -18,7 +18,6 @@ import com.mapbox.navigation.core.navigator.getLocationMatcherResult
 import com.mapbox.navigation.core.navigator.getRouteInitInfo
 import com.mapbox.navigation.core.navigator.getRouteProgressFrom
 import com.mapbox.navigation.core.navigator.getTripStatusFrom
-import com.mapbox.navigation.core.navigator.mapToDirectionsApi
 import com.mapbox.navigation.core.navigator.toFixLocation
 import com.mapbox.navigation.core.navigator.toLocation
 import com.mapbox.navigation.core.navigator.toLocations
@@ -33,7 +32,6 @@ import com.mapbox.navigation.testing.MainCoroutineRule
 import com.mapbox.navigation.testing.MockLoggerRule
 import com.mapbox.navigation.utils.internal.JobControl
 import com.mapbox.navigation.utils.internal.ThreadController
-import com.mapbox.navigator.BannerInstruction
 import com.mapbox.navigator.FixLocation
 import com.mapbox.navigator.NavigationStatus
 import com.mapbox.navigator.NavigationStatusOrigin

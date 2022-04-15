@@ -12,7 +12,6 @@ import com.mapbox.navigation.base.options.RoutingTilesOptions
 import com.mapbox.navigation.base.route.NavigationRoute
 import com.mapbox.navigation.utils.internal.logD
 import com.mapbox.navigation.utils.internal.logE
-import com.mapbox.navigator.BannerInstruction
 import com.mapbox.navigator.CacheDataDomain
 import com.mapbox.navigator.CacheHandle
 import com.mapbox.navigator.ElectronicHorizonObserver

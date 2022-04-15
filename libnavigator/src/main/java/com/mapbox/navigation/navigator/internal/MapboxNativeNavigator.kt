@@ -9,7 +9,6 @@ import com.mapbox.navigation.base.options.NavigationOptions
 import com.mapbox.navigation.base.options.PredictiveCacheLocationOptions
 import com.mapbox.navigation.base.options.RoutingTilesOptions
 import com.mapbox.navigation.base.route.NavigationRoute
-import com.mapbox.navigator.BannerInstruction
 import com.mapbox.navigator.CacheHandle
 import com.mapbox.navigator.ElectronicHorizonObserver
 import com.mapbox.navigator.Experimental
